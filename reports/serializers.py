@@ -27,11 +27,11 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'id', 'title', 'description', 'location', 'severity',
+            'id', 'title', 'description', 'fullAddress', 'severity',
             'category', 'user', 'media', 'comments', 'upvotes_count',
             'downvotes_count', 'comments_count', 'has_user_voted',
             'created_at', 'time_ago', 'latitude', 'longitude',
-            'is_verified', 'is_approved'
+            'is_verified', 'is_approved', 'crime_time', 'district', 'division'
         ]
         read_only_fields = ['is_verified', 'is_approved']
 

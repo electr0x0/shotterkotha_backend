@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -204,3 +205,29 @@ CORS_ALLOW_CREDENTIALS = True
 TWILIO_ACCOUNT_SID = 'ACce50940083d5aa0256257cc8c001cadf'
 TWILIO_AUTH_TOKEN = '01b004d4b5d2a028d4954dd1b96e7e77'
 TWILIO_WHATSAPP_NUMBER = '+14155238886'
+
+# Media settings
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Maximum upload size (10MB)
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
+# Allowed file types
+ALLOWED_MEDIA_TYPES = {
+    'image': ['image/jpeg', 'image/png', 'image/webp'],
+    'video': ['video/mp4', 'video/webm']
+}
+
+# Compression settings
+IMAGE_COMPRESSION = {
+    'max_width': 1920,
+    'max_height': 1080,
+    'quality': 85
+}
+
+VIDEO_COMPRESSION = {
+    'max_height': 720,
+    'bitrate': '2M',
+    'audio_bitrate': '128k'
+}
