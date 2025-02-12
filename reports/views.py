@@ -9,14 +9,17 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from django.utils import timezone
 from datetime import timedelta
+from rest_framework.parsers import MultiPartParser, FormParser
 
 # Create your views here.
 
 @authentication_classes([JWTAuthentication])  # Add JWT authentication
 @permission_classes([permissions.AllowAny])  # Allow any user
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    parser_classes = (MultiPartParser, FormParser)
     
     def get_permissions(self):
         """
@@ -45,6 +48,23 @@ class PostViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        # Handle the media file from request.FILES
+        media_file = request.FILES.get('media')
+        
+        # Create mutable copy of data
+        mutable_data = request.data.copy()
+        
+        # Add media_files to the data
+        if media_file:
+            mutable_data.setlist('media_files', [media_file])
+        
+        serializer = self.get_serializer(data=mutable_data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

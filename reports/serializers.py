@@ -41,8 +41,7 @@ class PostSerializer(serializers.ModelSerializer):
     media_files = serializers.ListField(
         child=serializers.FileField(),
         write_only=True,
-        required=False,
-        source='media'
+        required=False
     )
     user = UserSerializer(read_only=True)
     comments_count = serializers.SerializerMethodField()
@@ -81,11 +80,7 @@ class PostSerializer(serializers.ModelSerializer):
         read_only_fields = ['is_verified', 'is_approved']
 
     def create(self, validated_data):
-        media_files = validated_data.pop('media', [])
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            validated_data['user'] = request.user
-
+        media_files = validated_data.pop('media_files', [])
         if not isinstance(media_files, list):
             media_files = [media_files]
 
@@ -108,7 +103,7 @@ class PostSerializer(serializers.ModelSerializer):
                     media_obj.save()
                     
                     # Update post description if it's empty
-                    if not post.description and analysis.get('description'):
+                    if not validated_data.get('description'):
                         post.description = analysis.get('description', '')
                         post.save()
                         
