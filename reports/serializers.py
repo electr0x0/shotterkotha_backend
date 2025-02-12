@@ -1,11 +1,21 @@
 from rest_framework import serializers
 from .models import Post, Media, Comment
 from skAuth.serializers import UserSerializer
+from .utils import generate_image_description
+import json
 
 class MediaSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    
     class Meta:
         model = Media
-        fields = ['id', 'file', 'media_type', 'ai_description', 'order']
+        fields = ['id', 'file_url', 'media_type', 'ai_description', 'order']
+
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        if obj.file and hasattr(obj.file, 'url'):
+            return request.build_absolute_uri(obj.file.url) if request else obj.file.url
+        return None
 
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -15,50 +25,41 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'content', 'created_at']
 
 class PostSerializer(serializers.ModelSerializer):
-    media = MediaSerializer(many=True, required=True)
+    media = MediaSerializer(many=True, read_only=True)
+    media_upload = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=True,
+        source='media'
+    )
     user = UserSerializer(read_only=True)
-    comments = CommentSerializer(many=True, read_only=True)
+    comments_count = serializers.SerializerMethodField()
     upvotes_count = serializers.SerializerMethodField()
     downvotes_count = serializers.SerializerMethodField()
-    comments_count = serializers.SerializerMethodField()
     has_user_voted = serializers.SerializerMethodField()
     time_ago = serializers.SerializerMethodField()
+    description = serializers.CharField(read_only=True)
 
     class Meta:
         model = Post
         fields = [
             'id', 'title', 'description', 'fullAddress', 'severity',
-            'category', 'user', 'media', 'comments', 'upvotes_count',
-            'downvotes_count', 'comments_count', 'has_user_voted',
-            'created_at', 'time_ago', 'latitude', 'longitude',
-            'is_verified', 'is_approved', 'crime_time', 'district', 'division'
+            'category', 'user', 'media', 'media_upload', 'comments', 
+            'upvotes_count', 'downvotes_count', 'comments_count', 
+            'has_user_voted', 'created_at', 'time_ago', 'latitude', 
+            'longitude', 'is_verified', 'is_approved', 'crime_time', 
+            'district', 'division'
         ]
-        read_only_fields = ['is_verified', 'is_approved']
+        read_only_fields = ['is_verified', 'is_approved', 'description']
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
 
     def get_upvotes_count(self, obj):
         return obj.upvotes.count()
 
     def get_downvotes_count(self, obj):
         return obj.downvotes.count()
-
-    def get_comments_count(self, obj):
-        return obj.comments.count()
-
-    def get_time_ago(self, obj):
-        from django.utils import timezone
-        from datetime import datetime, timedelta
-        
-        now = timezone.now()
-        diff = now - obj.created_at
-
-        if diff < timedelta(minutes=1):
-            return 'just now'
-        elif diff < timedelta(hours=1):
-            return f'{int(diff.seconds/60)} minutes ago'
-        elif diff < timedelta(days=1):
-            return f'{int(diff.seconds/3600)} hours ago'
-        else:
-            return f'{diff.days} days ago'
 
     def get_has_user_voted(self, obj):
         request = self.context.get('request')
@@ -69,31 +70,51 @@ class PostSerializer(serializers.ModelSerializer):
                 return 'down'
         return None
 
-    def validate(self, data):
-        if 'media' not in data or not data['media']:
-            raise serializers.ValidationError(
-                "At least one image or video is required"
-            )
-        return data
+    def get_time_ago(self, obj):
+        from django.utils import timezone
+        from django.utils.timesince import timesince
+        return timesince(obj.created_at, timezone.now())
 
     def create(self, validated_data):
-        media_data = validated_data.pop('media')
+        media_files = validated_data.pop('media')
         post = Post.objects.create(**validated_data)
         
-        for media in media_data:
-            media_obj = Media.objects.create(post=post, **media)
-            if media_obj.media_type == 'image':
-                # Generate AI description
-                from .utils import generate_image_description
-                media_obj.ai_description = generate_image_description(media_obj.file.path)
-                media_obj.save()
+        has_valid_crime_media = False
+        ai_description = None
         
-        # Validate post using custom util
-        from .utils import isValidCrimePost
-        if not isValidCrimePost(post):
+        for index, file in enumerate(media_files):
+            media_type = 'image' if file.content_type.startswith('image/') else 'video'
+            media_obj = Media.objects.create(
+                post=post,
+                file=file,
+                media_type=media_type,
+                order=index
+            )
+            
+            if media_type == 'image':
+                try:
+                    analysis = generate_image_description(media_obj.file.path)
+                    media_obj.ai_analysis = analysis
+                    media_obj.ai_description = analysis.get('description', '')
+                    media_obj.save()
+                    
+                    if analysis.get('isCrime', False) and not ai_description:
+                        ai_description = analysis.get('description', '')
+                    
+                    if analysis.get('isCrime', False):
+                        has_valid_crime_media = True
+                except Exception as e:
+                    print(f"Error processing image: {str(e)}")
+                    continue
+        
+        if ai_description:
+            post.description = ai_description
+            post.save()
+        
+        if not has_valid_crime_media:
             post.delete()
             raise serializers.ValidationError(
-                "Post validation failed. It may not be a valid crime report."
+                "No valid crime-related content detected in the uploaded media."
             )
         
         return post 

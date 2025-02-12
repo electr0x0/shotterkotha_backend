@@ -77,18 +77,34 @@ class Media(models.Model):
                 self.file = processed_file
                 self.media_type = media_type
                 
+                # First save to get the file in place
+                super().save(*args, **kwargs)
+                
                 # Generate AI analysis for images
                 if media_type == 'image':
-                    analysis = generate_image_description(self.file.path)
-                    self.ai_analysis = analysis
-                    self.ai_description = analysis.get('description', '')
+                    # Use the relative path from MEDIA_ROOT
+                    file_path = self.file.name  # This gets the path relative to MEDIA_ROOT
+                    analysis = generate_image_description(file_path)
                     
-                    # Update post with AI-suggested severity and category
-                    if self.post and analysis.get('isCrime', False):
-                        self.post.severity = analysis.get('severity', 'low')
-                        self.post.category = analysis.get('category', 'other')
-                        self.post.save()
+                    # Store the analysis
+                    if isinstance(analysis, dict):
+                        self.ai_analysis = analysis
+                        self.ai_description = analysis.get('description', '')
+                        
+                        # Update post with AI-suggested severity and category if they match choices
+                        if self.post:
+                            severity = analysis.get('severity', '').lower()
+                            category = analysis.get('category', '').lower()
+                            
+                            # Only update if values match the choices
+                            if severity in dict(self.post.SEVERITY_CHOICES):
+                                self.post.severity = severity
+                            if category in dict(self.post.CATEGORY_CHOICES):
+                                self.post.category = category
+                            self.post.save()
                     
+                    return  # Return here to avoid double save
+                
         super().save(*args, **kwargs)
 
 class Comment(models.Model):

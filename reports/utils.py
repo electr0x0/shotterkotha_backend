@@ -6,6 +6,7 @@ from django.conf import settings
 import magic  # for mime type detection
 import json
 from .image_analysis import analyze_image
+from google import genai
 
 def compress_image(image_file):
     """
@@ -107,24 +108,72 @@ def process_media_file(file):
         raise ValueError('Unsupported media type')
 
 def generate_image_description(image_path):
-    """
-    Generate AI description for an image using Gemini Vision.
-    Returns the analysis as a dictionary.
-    """
     try:
-        analysis = analyze_image(image_path)
-        # Parse the JSON response
-        result = json.loads(analysis)
+        API_KEY = 'AIzaSyBVLwDtAHrLoiBHqBJ-KbbIfBpwFChoEYo'
+ # Make sure to set this in your environment
+        client = genai.Client(api_key=API_KEY)
+        
+        print(image_path)
+
+        image_path = os.path.join(settings.MEDIA_ROOT, image_path)
+
+        
+        image_file = client.files.upload(file=image_path)
+        
+        # Prompt engineering for detailed crime analysis
+        prompt = """
+        You are an expert crime scene investigator and report writer. Analyze this image and provide a detailed response in the following JSON format:
+        Use this JSON schema:
+        {
+            "isCrime": boolean (true if image shows any crime, suspicious activity, or evidence of crime),
+            "title": "A concise but descriptive title for a crime report",
+            "description": "A detailed description as if writing a crime report. Include:
+                - What is visible in the image
+                - Any potential evidence
+                - Environmental details
+                - Suspicious elements
+                - Potential severity of the situation
+                Make it as detailed as possible while maintaining professional language.",
+            "severity": "low|medium|high",
+            "category": "theft|assault|fraud|vandalism|other"
+        }
+        
+        If no crime-related content is visible, return isCrime as false with minimal other details.
+        Ensure your response is valid JSON and not a string. It must be a JSON object. staring wit { and ending with }
+        Make sure its not markdown with ```json or ```
+        """
+        
+        # Generate content using the correct model and format
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=[prompt, image_file]
+        )
+
+
+        cleaned_text = response.text.strip('`').strip()
+
+        if cleaned_text.startswith('json\n'):
+            cleaned_text = cleaned_text[5:]
+
+
+        result = json.loads(cleaned_text)
+
+        print("GOOGLE GEMINI RESPONSE", result)
+        
+
+
         return result
+            
     except Exception as e:
-        print(f"Error generating image description: {str(e)}")
-        return {
+        # Handle any other errors
+        error_response = {
             "isCrime": False,
             "title": "Error analyzing image",
-            "description": "Failed to analyze image content",
+            "description": f"An error occurred while analyzing the image: {str(e)}",
             "severity": "low",
             "category": "other"
         }
+        return json.dumps(error_response)
 
 def isValidCrimePost(post):
     """

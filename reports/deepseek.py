@@ -3,7 +3,7 @@ from typing import Tuple
 
 def get_groq_response(prompt: str) -> Tuple[str, str]:
     """
-    Get a response from Groq model specialized in Bangladesh traffic rules education.
+    Get a response from Groq model specialized in Bangladesh  crime rules and emergency contacts.
     
     Args:
         prompt (str): The input prompt to send to Groq
@@ -13,23 +13,7 @@ def get_groq_response(prompt: str) -> Tuple[str, str]:
     """
     API_KEY = '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'
     
-    system_context = """You are a knowledgeable expert on Bangladesh traffic rules, road safety, and driving regulations. 
-    
-    Your primary goals are:
-    1. Educate users about proper traffic rules in Bangladesh
-    2. Explain why following traffic rules is crucial for safety
-    3. Provide practical advice for road safety
-    4. Respond in Bangla if the user asks in Bangla or requests Bangla response
-    5. Share real consequences of traffic rule violations
-    6. Promote responsible driving behavior
-    
-    When responding:
-    - Be clear and authoritative about traffic rules
-    - Use real examples from Bangladesh context
-    - Emphasize safety and responsibility
-    - Include specific local laws and penalties when relevant
-    - If the user writes in Bangla, respond in Bangla
-    - Dont respond to other questions except for question that are related or somehwat related to Traffic Rules and Traffic of Bangladesh.
+    system_context = """You are a helpful assistant that can answer questions on crime and criminal activities, also they can provide emergency contancts. All in the context of Bangladesh"
     """
     
     client = Groq(api_key=API_KEY)
@@ -64,7 +48,7 @@ def get_groq_response(prompt: str) -> Tuple[str, str]:
 
 # Example usage
 if __name__ == "__main__":
-    sample_prompt = "বাংলাদেশে ট্রাফিক সিগন্যাল মেনে চলার গুরুত্ব কি?"
+    sample_prompt = "What is the capital of Bangladesh?"
     thinking, response = get_groq_response(sample_prompt)
     
     # Save response to file
