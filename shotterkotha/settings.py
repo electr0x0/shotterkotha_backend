@@ -134,10 +134,12 @@ AUTH_USER_MODEL = 'skAuth.User'
 # Email Configuration (Hostinger)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.hostinger.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@yourdomain.com'
-EMAIL_HOST_PASSWORD = 'your-email-password'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'hms@cloudconnectmedia.com'
+EMAIL_HOST_PASSWORD = 'r9$WP6eT;?'
+DEFAULT_FROM_EMAIL = 'ShotterKotha <hms@cloudconnectmedia.com>'
 
 # Twilio Configuration
 TWILIO_ACCOUNT_SID = 'your-account-sid'
@@ -184,7 +186,8 @@ SPECTACULAR_SETTINGS = {
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.hostinger.com'
 EMAIL_PORT = 465
-EMAIL_USE_TLS = True
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
 EMAIL_HOST_USER = 'hms@cloudconnectmedia.com'
 EMAIL_HOST_PASSWORD = 'r9$WP6eT;?'
 DEFAULT_FROM_EMAIL = 'ShotterKotha <hms@cloudconnectmedia.com>'
