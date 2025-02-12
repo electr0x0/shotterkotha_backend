@@ -21,6 +21,8 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView
 )
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,4 +33,5 @@ urlpatterns = [
     # Optional UI - choose either Swagger or Redoc
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-]
+    path('api/reports/', include('reports.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
