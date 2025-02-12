@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 # Create your views here.
 
@@ -19,7 +19,7 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
     
     def get_permissions(self):
         """
@@ -76,27 +76,22 @@ class PostViewSet(viewsets.ModelViewSet):
 
         if vote_type not in ['up', 'down']:
             return Response(
-                {"error": "Invalid vote type. Use 'up' or 'down'"},
+                {'error': 'Invalid vote type. Must be "up" or "down".'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Remove existing votes first
+        # Remove existing votes
         post.upvotes.remove(request.user)
         post.downvotes.remove(request.user)
 
         # Add new vote
         if vote_type == 'up':
             post.upvotes.add(request.user)
-            message = "Upvoted successfully"
         else:
             post.downvotes.add(request.user)
-            message = "Downvoted successfully"
 
-        return Response({
-            "message": message,
-            "upvotes_count": post.upvotes.count(),
-            "downvotes_count": post.downvotes.count()
-        })
+        serializer = self.get_serializer(post)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def comment(self, request, pk=None):
