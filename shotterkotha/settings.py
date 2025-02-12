@@ -37,15 +37,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',
+    'skAuth',
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_spectacular',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -127,7 +129,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom User Model
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'skAuth.User'
 
 # Email Configuration (Hostinger)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -177,3 +179,29 @@ SPECTACULAR_SETTINGS = {
         'persistAuthorization': True,
     }
 }
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'hms@cloudconnectmedia.com'
+EMAIL_HOST_PASSWORD = 'r9$WP6eT;?'
+DEFAULT_FROM_EMAIL = 'ShotterKotha <hms@cloudconnectmedia.com>'
+
+# CORS Settings
+CORS_ALLOW_ALL_ORIGINS = True  # Only for development!
+CORS_ALLOW_CREDENTIALS = True
+
+# For production, you should specify allowed origins:
+# CORS_ALLOWED_ORIGINS = [
+#     "https://yourdomain.com",
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+# ]
+
+
+
+TWILIO_ACCOUNT_SID = 'ACce50940083d5aa0256257cc8c001cadf'
+TWILIO_AUTH_TOKEN = '01b004d4b5d2a028d4954dd1b96e7e77'
+TWILIO_WHATSAPP_NUMBER = '+14155238886'

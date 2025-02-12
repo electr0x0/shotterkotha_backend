@@ -8,8 +8,11 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'first_name', 'last_name', 
-                 'phone_number', 'verified_status')
+        fields = (
+            'id', 'email', 'username', 'first_name', 'last_name', 
+            'phone_number', 'verified_status', 'address', 'district',
+            'division', 'fullAddress', 'longitude', 'latitude'
+        )
         read_only_fields = ('verified_status',)
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -18,8 +21,20 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'password2', 
-                 'first_name', 'last_name', 'phone_number')
+        fields = (
+            'email', 'username', 'password', 'password2', 
+            'first_name', 'last_name', 'phone_number',
+            'address', 'district', 'division', 'fullAddress',
+            'longitude', 'latitude'
+        )
+        extra_kwargs = {
+            'address': {'required': False},
+            'district': {'required': False},
+            'division': {'required': False},
+            'fullAddress': {'required': False},
+            'longitude': {'required': False},
+            'latitude': {'required': False},
+        }
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -35,4 +50,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         data['user'] = UserSerializer(self.user).data
-        return data 
+        return data
+
+class UserLocationUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating user location details only"""
+    class Meta:
+        model = User
+        fields = ('address', 'district', 'division', 'fullAddress', 'longitude', 'latitude') 
