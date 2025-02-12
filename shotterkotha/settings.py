@@ -141,11 +141,6 @@ EMAIL_HOST_USER = 'hms@cloudconnectmedia.com'
 EMAIL_HOST_PASSWORD = 'r9$WP6eT;?'
 DEFAULT_FROM_EMAIL = 'ShotterKotha <hms@cloudconnectmedia.com>'
 
-# Twilio Configuration
-TWILIO_ACCOUNT_SID = 'your-account-sid'
-TWILIO_AUTH_TOKEN = 'your-auth-token'
-TWILIO_WHATSAPP_NUMBER = 'your-twilio-whatsapp-number'
-
 # DRF Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
